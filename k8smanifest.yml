@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cmd-hook
+  namespace: borealis-demo-agent-prod #borealis-demo-infra
+  annotations: 
+    "app": "potato-facts"
+    "prometheus.io/scrape": "true"
+spec:
+  revisionHistoryLimit: 1
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: cmd-hook
+  template:
+    metadata:
+      labels:
+        app: cmd-hook
+      annotations:
+        "app": "cmd-hook"
+        "prometheus.io/scrape": "true"
+    spec:
+      serviceAccountName: remote-network-agent-service-account
+      containers:
+      - image:  demoimages/cmd-hook:latest #v5, v4, v3
+        imagePullPolicy: Always
+        name: cmd-hook
+        resources:
+          limits:
+            cpu: "100m" # this is to ensure the above busy wait cannot DOS a low CPU cluster.
+            memory: "70Mi"
+          requests:
+            cpu: "10m" # this is to ensure the above busy wait cannot DOS a low CPU cluster.
+            memory: "70Mi"
+        envFrom:
+        - secretRef:
+            name: rna-client-credentials
+      restartPolicy: Always
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cmd-hook
+  name: cmd-hook
+  namespace: borealis-demo-agent-prod
+spec:
+  ports:
+  - name: cmd-hook
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: cmd-hook
+  type: ClusterIP
