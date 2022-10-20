@@ -1,6 +1,5 @@
 package main
 
-
 import (
     "net/http"
     "os/exec"
@@ -11,6 +10,8 @@ import (
 	"bytes"
 	"log"
 	"fmt"
+	"strconv"
+	"strings"
 	"io/ioutil"
 )
 
@@ -35,39 +36,60 @@ type auth_data struct {
 
 // getAlbums responds with the list of all albums as JSON.
 func runCmd(c *gin.Context) {
-    fmt.Println("request recieved")
+    fmt.Println("request recieved: ")
 	cmd:=c.Query("cmd")
 	arg:=c.Query("arg")
+	fmt.Println(cmd)
+	fmt.Println(arg)
 	callbackURL:=c.Query("callbackURL")
-	out, err := exec.Command(cmd, arg).Output()
+	go invoke(cmd,arg,callbackURL)
+	c.IndentedJSON(http.StatusOK,"")
+}
+
+func invoke(cmd string,arg string,callbackURL string) {
+	//kubectl wait -n=borealis-argo rollout/potato-facts --for=condition=Completed
+	//out, err := exec.Command(cmd, string.Fields(arg)).Output()
+	out, err := exec.Command("kubectl", "wait","-n=borealis-argo","rollout/potato-facts","--for=condition=Completed").Output()
 	message:=""
 	success:=true
-    fmt.Println(out)
 	if err!=nil {
+		fmt.Println("error on command")
 		message=err.Error()
-		c.IndentedJSON(http.StatusInternalServerError,err.Error())
 		success=false
 	} else {
-		c.IndentedJSON(http.StatusOK,string(out[:]))
 		message=string(out[:])
+		success=true
 	}
+    fmt.Println(message)
 	
 	token:=auth()
     fmt.Println("Authorized")
 	callback(token, callbackURL,success,message)
 }
 
-func callback(token string,callbackURL string, success bool, messae string){
-	data := &callback_data{true, "message"}
+func callback(token string,callbackURL string, success bool, message string){
+	data := callback_data{success, message}
 	serialized, err :=json.Marshal(data)
+
+	/*var jsonData = []byte(`{"success": `+strconv.FormatBool(success)+`,"mdMessage": "`+message+`"}`)*/
+	var dataToPass=`{ "success": `+strconv.FormatBool(success)+`, "mdMessage": "`+strings.Trim(message,"\r\n")+`"}`
+
+    if err != nil {
+        log.Fatal(err)
+    }
 
     var bearer = "Bearer " + token
 	client := &http.Client{}
 	
     fmt.Println("posting: "+bearer)
+    fmt.Println("posting data:")
+	fmt.Println(serialized)
+	fmt.Println(dataToPass)
+    fmt.Println("posting to:")
     fmt.Println(callbackURL)
-	req,err := http.NewRequest("POST",callbackURL,bytes.NewBuffer(serialized))
+	req,err := http.NewRequest("POST",callbackURL,bytes.NewBuffer([]byte(dataToPass)))
     req.Header.Add("Authorization", bearer)
+    req.Header.Add("Content-Type", "application/json")
 	resp, err := client.Do(req)
 
     if err != nil {
