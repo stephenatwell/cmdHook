@@ -27,17 +27,22 @@ type callback_data struct {
 }
 
 type auth_data struct {
-    access_token  string  `json:"access_token"`
+    access_token  string
+	scope	string
+	expires_in int
+	token_type	string
 }
 
 // getAlbums responds with the list of all albums as JSON.
-func getAlbums(c *gin.Context) {
+func runCmd(c *gin.Context) {
+    fmt.Println("request recieved")
 	cmd:=c.Query("cmd")
 	arg:=c.Query("arg")
 	callbackURL:=c.Query("callbackURL")
 	out, err := exec.Command(cmd, arg).Output()
 	message:=""
 	success:=true
+    fmt.Println(out)
 	if err!=nil {
 		message=err.Error()
 		c.IndentedJSON(http.StatusInternalServerError,err.Error())
@@ -48,6 +53,7 @@ func getAlbums(c *gin.Context) {
 	}
 	
 	token:=auth()
+    fmt.Println("Authorized")
 	callback(token, callbackURL,success,message)
 }
 
@@ -57,6 +63,9 @@ func callback(token string,callbackURL string, success bool, messae string){
 
     var bearer = "Bearer " + token
 	client := &http.Client{}
+	
+    fmt.Println("posting: "+bearer)
+    fmt.Println(callbackURL)
 	req,err := http.NewRequest("POST",callbackURL,bytes.NewBuffer(serialized))
     req.Header.Add("Authorization", bearer)
 	resp, err := client.Do(req)
@@ -92,14 +101,23 @@ func auth() string{
     }
 
     fmt.Println(string(body))
-	var access_token auth_data
-	json.Unmarshal([]byte(body),&access_token)
-	return access_token.access_token
+	var access_token map[string]string
+	err = json.Unmarshal([]byte(body),&access_token)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("unmarshalled:")
+    fmt.Println(access_token["access_token"])
+	return access_token["access_token"]
 }
 
 func main() {
     router := gin.Default()
-    router.GET("/albums", getAlbums)
+    router.GET("/cmd", runCmd)
 
-    router.Run("localhost:8080")
+    fmt.Println("starting")
+    //router.Run("localhost:8080")
+    router.Run()
 }
