@@ -101,7 +101,7 @@ func auth() string{
     }
 
     fmt.Println(string(body))
-	var access_token map[string]string
+	var access_token map[string]interface{}
 	err = json.Unmarshal([]byte(body),&access_token)
 
     if err != nil {
@@ -109,8 +109,8 @@ func auth() string{
     }
 
     fmt.Println("unmarshalled:")
-    fmt.Println(access_token["access_token"])
-	return access_token["access_token"]
+    fmt.Println(access_token["access_token"].(string))
+	return access_token["access_token"].(string)
 }
 
 func main() {
