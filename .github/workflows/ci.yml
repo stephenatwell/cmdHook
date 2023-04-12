@@ -1,8 +1,13 @@
 name: ci
-on:
-  push:
-    branches:
-      - "main"
+on:    
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'version to tag, do not include the v'     
+        required: true
+        default: 'latest'
+      tags:
+        description: 'Test scenario tags'  
 
 jobs:
   docker:
@@ -30,4 +35,12 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: demoimages/cmd-hook:v0.5
+          tags: demoimages/cmd-hook:latest
+      -
+        name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: demoimages/cmd-hook:v${{ github.event.inputs.version }}
