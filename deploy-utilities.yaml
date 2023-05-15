@@ -1,0 +1,24 @@
+version: v1
+kind: kubernetes
+application: demo-utilities
+
+targets:
+  eks03-prod-cmd-hook:
+    account: eks03-prod
+    namespace: armory-rna
+    strategy: rolling
+  eks01-stage-cmd-hook:
+    account: eks01-stage
+    namespace: armory-rna
+    strategy: rolling
+
+manifests:
+  - path: utilities/cmdhook.yml
+    targets: ['eks03-prod-cmd-hook','eks01-stage-cmd-hook']
+  
+strategies:
+  rolling:
+    canary:
+      steps:
+        - setWeight:
+            weight: 100
