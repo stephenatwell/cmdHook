@@ -16,5 +16,3 @@ jobs:
           clientSecret:  "${{ secrets.ARMORY_CDAAS_CLIENT_SECRET }}" #Client secret that you created in the Armory Cloud Console that has been encrypted with GitHub's encrypted secrets.
           path-to-file: "/deploy-utilities.yaml" # Path to the deployment file. For more information, see the Create a deployment file section.
 
-
-
