@@ -7,10 +7,17 @@ targets:
     account: prod-us-east1-tier-1
     namespace: armory-rna
     strategy: rolling
-
+  prod-us-east1-summer-1:
+    account: prod-us-east1-summer-1
+    namespace: armory-rna
+    strategy: rolling
+  staging-us-east1-spring-1:
+    account: staging-us-east1-spring-1
+    namespace: armory-rna
+    strategy: rolling
 manifests:
   - path: utilities/cmdhook.yml
-    targets: ['prod-us-east1-tier-1']
+    targets: ['prod-us-east1-tier-1', 'prod-us-east1-summer-1', 'staging-us-east1-spring-1']
 
 strategies:
   rolling:
