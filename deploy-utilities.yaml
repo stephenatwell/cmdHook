@@ -3,6 +3,10 @@ kind: kubernetes
 application: demo-utilities
 
 targets:
+  prod-us-east1-atlantis:
+    account: prod-us-east1-atlantis
+    namespace: armory-rna
+    strategy: rolling
   prod-us-east1-tier-1:
     account: prod-us-east1-tier-1
     namespace: armory-rna
@@ -17,7 +21,7 @@ targets:
     strategy: rolling
 manifests:
   - path: utilities/cmdhook.yml
-    targets: ['prod-us-east1-tier-1', 'prod-us-east1-summer-1', 'staging-us-east1-spring-1']
+    targets: ['prod-us-east1-tier-1', 'prod-us-east1-summer-1', 'staging-us-east1-spring-1', 'prod-us-east1-atlantis']
 
 strategies:
   rolling:
