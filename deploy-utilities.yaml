@@ -14,7 +14,6 @@ targets:
 
 manifests:
   - path: utilities/cmdhook.yml
-    targets: ['eks03-prod-cmd-hook','eks01-stage-cmd-hook']
   
 strategies:
   rolling:
